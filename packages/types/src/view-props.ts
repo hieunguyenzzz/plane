@@ -175,6 +175,10 @@ export interface IIssueDisplayProperties {
   modules?: boolean;
   cycle?: boolean;
   issue_type?: boolean;
+  // Marketing properties (Mobelaris fork — Tier A)
+  marketing_campaign?: boolean;
+  marketing_channel?: boolean;
+  marketing_budget_gbp?: boolean;
 }
 
 export type TIssueKanbanFilters = {

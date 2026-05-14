@@ -31,6 +31,8 @@ export interface IPartialProject {
   page_view: boolean;
   inbox_view: boolean;
   guest_view_all_features?: boolean;
+  // Marketing properties toggle (Mobelaris fork — Tier A)
+  marketing_properties_enabled?: boolean;
   project_lead?: IUserLite | string | null;
   network?: number;
   // Timestamps

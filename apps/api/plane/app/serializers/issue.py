@@ -799,6 +799,10 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
+            # Marketing properties (Mobelaris fork — Tier A)
+            "marketing_campaign",
+            "marketing_channel",
+            "marketing_budget_gbp",
         ]
         read_only_fields = fields
 
@@ -849,6 +853,10 @@ class IssueListDetailSerializer(serializers.Serializer):
             "updated_by": instance.updated_by_id,
             "is_draft": instance.is_draft,
             "archived_at": instance.archived_at,
+            # Marketing properties (Mobelaris fork — Tier A)
+            "marketing_campaign": instance.marketing_campaign,
+            "marketing_channel": instance.marketing_channel,
+            "marketing_budget_gbp": instance.marketing_budget_gbp,
             # Computed fields
             "cycle_id": instance.cycle_id,
             "module_ids": self.get_module_ids(instance),

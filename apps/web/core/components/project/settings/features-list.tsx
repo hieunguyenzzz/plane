@@ -73,6 +73,17 @@ const PROJECT_FEATURES_LIST = {
     isPro: false,
     isEnabled: true,
   },
+  // Marketing properties toggle (Mobelaris fork — Tier A)
+  marketing_properties: {
+    key: "marketing_properties",
+    property: "marketing_properties_enabled",
+    title: "Marketing properties",
+    description:
+      "Show Campaign, Channel, and Budget (GBP) on work items in this project. Recommended only for the Marketing project.",
+    icon: <ViewsIcon className="h-5 w-5 flex-shrink-0 text-tertiary" />,
+    isPro: false,
+    isEnabled: true,
+  },
 };
 
 export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: Props) {

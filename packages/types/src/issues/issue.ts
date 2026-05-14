@@ -77,7 +77,23 @@ export type TBaseIssue = {
   is_draft: boolean;
   is_epic?: boolean;
   is_intake?: boolean;
+
+  // Marketing properties (Mobelaris fork — Tier A)
+  marketing_campaign?: string | null;
+  marketing_channel?: TMarketingChannel | null;
+  marketing_budget_gbp?: string | number | null;
 };
+
+export type TMarketingChannel =
+  | "email_outbound"
+  | "newsletter"
+  | "social"
+  | "paid_ads"
+  | "seo"
+  | "content"
+  | "pr"
+  | "influencer"
+  | "other";
 
 type IssueRelation = {
   id: string;

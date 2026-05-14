@@ -18,3 +18,7 @@ export * from "./sub-issue-column";
 export * from "./updated-on-column";
 export * from "./module-column";
 export * from "./cycle-column";
+// Marketing properties (Mobelaris fork — Tier A)
+export * from "./marketing-campaign-column";
+export * from "./marketing-channel-column";
+export * from "./marketing-budget-column";

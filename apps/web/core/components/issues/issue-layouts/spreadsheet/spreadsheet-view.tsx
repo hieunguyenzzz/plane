@@ -74,6 +74,15 @@ export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
     : SPREADSHEET_PROPERTY_LIST.filter((property) => {
         if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
         if (property === "modules" && !currentProjectDetails?.module_view) return false;
+        // Marketing properties (Mobelaris fork — Tier A): only show when project flag is on.
+        if (
+          (property === "marketing_campaign" ||
+            property === "marketing_channel" ||
+            property === "marketing_budget_gbp") &&
+          !currentProjectDetails?.marketing_properties_enabled
+        ) {
+          return false;
+        }
         return true;
       });
 
