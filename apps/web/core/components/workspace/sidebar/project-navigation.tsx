@@ -15,6 +15,7 @@ import type { EUserProjectRoles } from "@plane/types";
 // plane ui
 // components
 import { SidebarNavItem } from "@/components/sidebar/sidebar-navigation";
+import { ProjectViewsMenu } from "@/components/workspace/sidebar/project-views/project-views-menu";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -69,6 +70,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   };
 
   const baseNavigation = useCallback(
+    // eslint-disable-next-line no-shadow
     (workspaceSlug: string, projectId: string): TNavigationItem[] => [
       {
         i18n_key: "sidebar.work_items",
@@ -136,6 +138,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
 
   // memoized navigation items and adding additional navigation items
   const navigationItemsMemo = useMemo(() => {
+    // eslint-disable-next-line no-shadow
     const navigationItems = (workspaceSlug: string, projectId: string): TNavigationItem[] => {
       const navItems = baseNavigation(workspaceSlug, projectId);
 
@@ -147,7 +150,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
     };
 
     // sort navigation items by sortOrder
-    const sortedNavigationItems = navigationItems(workspaceSlug, projectId).sort(
+    const sortedNavigationItems = navigationItems(workspaceSlug, projectId).toSorted(
       (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
     );
 
@@ -182,6 +185,11 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         if (!hasAccess) return null;
 
         const shouldShowCount = item.key === "intake" && (project.intake_count ?? 0) > 0;
+
+        // Mobelaris fork — Views entry renders as an expandable tree with folders.
+        if (item.key === "views") {
+          return <ProjectViewsMenu key={item.key} workspaceSlug={workspaceSlug} projectId={projectId} />;
+        }
 
         return (
           <Link key={item.key} href={item.href} onClick={handleProjectClick}>

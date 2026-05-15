@@ -59,6 +59,8 @@ import type { IProjectRootStore } from "./project";
 import { ProjectRootStore } from "./project";
 import type { IProjectViewStore } from "./project-view.store";
 import { ProjectViewStore } from "./project-view.store";
+import type { IViewFolderStore } from "./view-folder.store";
+import { ViewFolderStore } from "./view-folder.store";
 import type { IRouterStore } from "./router.store";
 import { RouterStore } from "./router.store";
 import type { IStickyStore } from "./sticky/sticky.store";
@@ -82,6 +84,7 @@ export class CoreRootStore {
   module: IModuleStore;
   moduleFilter: IModuleFilterStore;
   projectView: IProjectViewStore;
+  viewFolder: IViewFolderStore;
   globalView: IGlobalViewStore;
   issue: IIssueRootStore;
   state: IStateStore;
@@ -119,6 +122,7 @@ export class CoreRootStore {
     this.module = new ModulesStore(this);
     this.moduleFilter = new ModuleFilterStore(this);
     this.projectView = new ProjectViewStore(this);
+    this.viewFolder = new ViewFolderStore(this);
     this.globalView = new GlobalViewStore(this);
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);
@@ -154,6 +158,7 @@ export class CoreRootStore {
     this.module = new ModulesStore(this);
     this.moduleFilter = new ModuleFilterStore(this);
     this.projectView = new ProjectViewStore(this);
+    this.viewFolder = new ViewFolderStore(this);
     this.globalView = new GlobalViewStore(this);
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);

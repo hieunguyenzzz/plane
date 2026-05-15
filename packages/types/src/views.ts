@@ -38,6 +38,23 @@ export interface IProjectView {
   is_locked: boolean;
   anchor?: string;
   owned_by: string;
+  // Mobelaris fork — sidebar grouping. null/undefined => view sits at root level.
+  folder?: string | null;
+}
+
+// Mobelaris fork — project-scoped folder for grouping views in the sidebar.
+export interface IViewFolder {
+  id: string;
+  name: string;
+  project: string;
+  workspace: string;
+  sort_order: number;
+  logo_props: TLogoProps | undefined;
+  created_at: Date;
+  updated_at: Date;
+  created_by: string;
+  updated_by: string;
+  deleted_at: Date | null;
 }
 
 export interface IPublishedProjectView extends Omit<IProjectView, "rich_filters"> {

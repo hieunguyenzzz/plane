@@ -30,6 +30,8 @@ export interface IProjectViewStore {
   getProjectViews: (projectId: string) => IProjectView[] | undefined;
   getFilteredProjectViews: (projectId: string) => IProjectView[] | undefined;
   getViewById: (viewId: string) => IProjectView;
+  // Mobelaris fork — bucket views by folder for the sidebar tree (folderId = null => root).
+  getViewsByFolder: (projectId: string, folderId: string | null) => IProjectView[];
   // fetch actions
   fetchViews: (workspaceSlug: string, projectId: string) => Promise<undefined | IProjectView[]>;
   fetchViewDetails: (workspaceSlug: string, projectId: string, viewId: string) => Promise<IProjectView>;
@@ -136,6 +138,22 @@ export class ProjectViewStore implements IProjectViewStore {
    * Returns view details by id
    */
   getViewById = computedFn((viewId: string) => this.viewMap?.[viewId] ?? null);
+
+  /**
+   * Mobelaris fork — bucket views by their folder assignment for sidebar rendering.
+   * Pass null to get the views that sit at the root level (folder = null/undefined).
+   */
+  getViewsByFolder = computedFn((projectId: string, folderId: string | null): IProjectView[] => {
+    if (!this.fetchedMap[projectId]) return [];
+    return Object.values(this.viewMap ?? {})
+      .filter((view) => view?.project === projectId)
+      .filter((view) => (folderId === null ? !view.folder : view.folder === folderId))
+      .toSorted((a, b) => {
+        const aName = getViewName(a.name).toLowerCase();
+        const bName = getViewName(b.name).toLowerCase();
+        return aName.localeCompare(bName);
+      });
+  });
 
   /**
    * Updates the filter
@@ -246,11 +264,10 @@ export class ProjectViewStore implements IProjectViewStore {
    * @returns
    */
   deleteView = async (workspaceSlug: string, projectId: string, viewId: string): Promise<any> => {
-    await this.viewService.deleteView(workspaceSlug, projectId, viewId).then(() => {
-      runInAction(() => {
-        delete this.viewMap[viewId];
-        if (this.rootStore.favorite.entityMap[viewId]) this.rootStore.favorite.removeFavoriteFromStore(viewId);
-      });
+    await this.viewService.deleteView(workspaceSlug, projectId, viewId);
+    runInAction(() => {
+      delete this.viewMap[viewId];
+      if (this.rootStore.favorite.entityMap[viewId]) this.rootStore.favorite.removeFavoriteFromStore(viewId);
     });
   };
 
