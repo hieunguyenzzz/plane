@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
-from .. import BaseViewSet, BaseAPIView
+from plane.app.views.base import BaseViewSet, BaseAPIView
 from plane.app.permissions import ROLE, allow_permission
 from plane.app.serializers import (
     CustomPropertySerializer,
