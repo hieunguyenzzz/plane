@@ -110,7 +110,8 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "created_at",
   "updated_at",
 ] as const;
-export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number];
+// Mobelaris fork — Tier B: allow `cp_<uuid>` filter keys for custom properties.
+export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number] | `cp_${string}`;
 
 export type TWorkItemFilterConditionKey = `${TWorkItemFilterProperty}__${TSupportedOperators}`;
 

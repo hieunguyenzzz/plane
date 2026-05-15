@@ -4,8 +4,8 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback, useMemo } from "react";
-import { AtSign, Briefcase } from "lucide-react";
+import { useCallback, useEffect, useMemo } from "react";
+import { AtSign, Briefcase, Tag } from "lucide-react";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
@@ -31,6 +31,7 @@ import type {
   IIssueLabel,
   IModule,
   IProject,
+  TCustomProperty,
   TWorkItemFilterProperty,
 } from "@plane/types";
 import { Avatar } from "@plane/ui";
@@ -38,6 +39,10 @@ import {
   getAssigneeFilterConfig,
   getCreatedAtFilterConfig,
   getCreatedByFilterConfig,
+  getCustomPropertyCheckboxFilterConfig,
+  getCustomPropertyDateFilterConfig,
+  getCustomPropertyMemberFilterConfig,
+  getCustomPropertyOptionFilterConfig,
   getCycleFilterConfig,
   getFileURL,
   getLabelFilterConfig,
@@ -51,9 +56,11 @@ import {
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
+  isCustomPropertyFilterSupported,
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
 import { useCycle } from "@/hooks/store/use-cycle";
 import { useLabel } from "@/hooks/store/use-label";
 import { useMember } from "@/hooks/store/use-member";
@@ -98,6 +105,8 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  // Mobelaris fork — Tier B: custom property store.
+  const customPropertyStore = useCustomProperty();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -131,10 +140,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [moduleIds, getModuleById]
   );
   const projects = useMemo(
-    () =>
-      projectIds
-        ? (projectIds.map((projectId) => getProjectById(projectId)).filter((project) => project) as IProject[])
-        : [],
+    () => (projectIds ? (projectIds.map((id) => getProjectById(id)).filter((p) => p) as IProject[]) : []),
     [projectIds, getProjectById]
   );
   const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
@@ -356,11 +362,86 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: isFilterEnabled("project_id") && projects !== undefined,
         filterIcon: Briefcase,
         projects: projects,
-        getOptionIcon: (project) => <Logo logo={project.logo_props} size={12} />,
+        getOptionIcon: (p) => <Logo logo={p.logo_props} size={12} />,
         ...operatorConfigs,
       }),
     [isFilterEnabled, projects, operatorConfigs]
   );
+
+  // ------- Custom property filter configs (Mobelaris fork — Tier B) -------
+  // Lazy-fetch the project's custom properties once we know the project.
+  useEffect(() => {
+    if (!workspaceSlug || !projectId) return;
+    if (customPropertyStore.getProjectProperties(projectId) !== undefined) return;
+    customPropertyStore.fetchProjectProperties(workspaceSlug, projectId).catch(() => {
+      // Non-fatal: filter dropdown will simply omit custom properties.
+    });
+  }, [workspaceSlug, projectId, customPropertyStore]);
+
+  const customProperties: TCustomProperty[] = useMemo(
+    () =>
+      (projectId ? (customPropertyStore.getProjectProperties(projectId) ?? []) : []).filter(
+        (p) => p.is_active && isCustomPropertyFilterSupported(p.type)
+      ),
+    [projectId, customPropertyStore]
+  );
+
+  const customPropertyConfigs = useMemo<TFilterConfig<TWorkItemFilterProperty>[]>(() => {
+    return customProperties
+      .map((prop) => {
+        const key = `cp_${prop.id}` as TWorkItemFilterProperty;
+        if (prop.type === "single_select" || prop.type === "multi_select") {
+          return getCustomPropertyOptionFilterConfig<TWorkItemFilterProperty>(key)({
+            isEnabled: true,
+            filterIcon: Tag,
+            propertyDisplayName: prop.name,
+            options: prop.options ?? [],
+            getOptionIcon: (option) =>
+              option?.color ? (
+                <span className="flex size-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: option.color }} />
+              ) : (
+                <Tag className="size-3 flex-shrink-0" />
+              ),
+            ...operatorConfigs,
+          });
+        }
+        if (prop.type === "person") {
+          return getCustomPropertyMemberFilterConfig<TWorkItemFilterProperty>(key)({
+            isEnabled: members !== undefined,
+            filterIcon: MembersPropertyIcon,
+            propertyDisplayName: prop.name,
+            members: members ?? [],
+            getOptionIcon: (memberDetails) => (
+              <Avatar
+                name={memberDetails.display_name}
+                src={getFileURL(memberDetails.avatar_url)}
+                showTooltip={false}
+                size="sm"
+              />
+            ),
+            ...operatorConfigs,
+          });
+        }
+        if (prop.type === "date") {
+          return getCustomPropertyDateFilterConfig<TWorkItemFilterProperty>(key)({
+            isEnabled: true,
+            filterIcon: CalendarLayoutIcon,
+            propertyDisplayName: prop.name,
+            ...operatorConfigs,
+          });
+        }
+        if (prop.type === "checkbox") {
+          return getCustomPropertyCheckboxFilterConfig<TWorkItemFilterProperty>(key)({
+            isEnabled: true,
+            filterIcon: Tag,
+            propertyDisplayName: prop.name,
+            ...operatorConfigs,
+          });
+        }
+        return null;
+      })
+      .filter((c): c is TFilterConfig<TWorkItemFilterProperty> => c !== null);
+  }, [customProperties, members, operatorConfigs]);
 
   return {
     areAllConfigsInitialized,
@@ -380,6 +461,8 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      // Mobelaris fork — Tier B: custom property filters.
+      ...customPropertyConfigs,
     ],
     configMap: {
       project_id: projectFilterConfig,
