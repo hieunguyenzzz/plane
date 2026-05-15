@@ -115,6 +115,10 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
 
         # Check if all fields are allowed
         for field in fields:
+            # Mobelaris fork — Tier B: cp_<uuid> custom-property keys are handled
+            # in _extract_custom_property_q, not the FilterSet. Skip allowlist check.
+            if isinstance(field, str) and field.startswith("cp_"):
+                continue
             # Field keys must match FilterSet filter names (including any lookups)
             # Example: 'sequence_id__gte' should be declared in base_filters
             # Special-case __range: require the '<base>__range' filter itself
