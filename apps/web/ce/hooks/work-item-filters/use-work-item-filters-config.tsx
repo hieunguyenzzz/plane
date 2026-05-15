@@ -143,7 +143,14 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () => (projectIds ? (projectIds.map((id) => getProjectById(id)).filter((p) => p) as IProject[]) : []),
     [projectIds, getProjectById]
   );
-  const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
+  // Mobelaris fork — Tier B: gate readiness on custom-property fetch as well, so the
+  // filter-config registry contains `cp_<uuid>` entries before the saved-view filter
+  // expression is rehydrated. Otherwise refreshes mark saved cp filters as "Invalid".
+  const areCustomPropertiesReady = projectId ? customPropertyStore.getProjectProperties(projectId) !== undefined : true;
+  const areAllConfigsInitialized = useMemo(
+    () => isLoaderReady(projectLoader) && areCustomPropertiesReady,
+    [projectLoader, areCustomPropertiesReady]
+  );
 
   /**
    * Checks if a filter is enabled based on the filters to show.
