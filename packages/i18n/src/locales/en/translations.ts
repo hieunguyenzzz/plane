@@ -226,10 +226,11 @@ export default {
   views_description: "Save custom sorts, filters, and display options or share them with your team.",
   pages_description: "Create and edit free-form content; notes, docs, anything.",
   intake_description: "Let non-members share bugs, feedback, and suggestions; without disrupting your workflow.",
-  // Marketing properties (Mobelaris fork — Tier A)
-  marketing_properties: "Marketing properties",
-  marketing_properties_description:
-    "Show Campaign, Channel, and Budget (GBP) on work items in this project. Recommended only for the Marketing project.",
+  // Custom properties (Mobelaris fork — Tier B)
+  custom_properties: "Custom properties",
+  custom_properties_description: "Define your own properties (text, number, select, date, etc.) per project.",
+  custom_properties_add: "Add property",
+  custom_properties_empty: "No custom properties yet. Create one to track extra data on work items.",
   time_tracking_description: "Log time spent on work items and projects.",
   work_management_description: "Manage your work and projects with ease.",
   documentation: "Documentation",

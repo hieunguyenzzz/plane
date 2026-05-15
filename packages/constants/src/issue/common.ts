@@ -225,23 +225,6 @@ export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
   "link",
   "attachment_count",
   "sub_issue_count",
-  // Marketing properties (Mobelaris fork — Tier A)
-  "marketing_campaign",
-  "marketing_channel",
-  "marketing_budget_gbp",
-];
-
-// Marketing channel options (Mobelaris fork — Tier A)
-export const MARKETING_CHANNEL_OPTIONS: { value: string; label: string }[] = [
-  { value: "email_outbound", label: "Email — outbound" },
-  { value: "newsletter", label: "Newsletter" },
-  { value: "social", label: "Social" },
-  { value: "paid_ads", label: "Paid ads" },
-  { value: "seo", label: "SEO" },
-  { value: "content", label: "Content" },
-  { value: "pr", label: "PR" },
-  { value: "influencer", label: "Influencer" },
-  { value: "other", label: "Other" },
 ];
 
 export const SPREADSHEET_PROPERTY_DETAILS: {
@@ -365,31 +348,6 @@ export const SPREADSHEET_PROPERTY_DETAILS: {
     descendingOrderKey: "sub_issues_count",
     descendingOrderTitle: "Least",
     icon: "LayersIcon",
-  },
-  // Marketing properties (Mobelaris fork — Tier A)
-  marketing_campaign: {
-    i18n_title: "Campaign",
-    ascendingOrderKey: "marketing_campaign",
-    ascendingOrderTitle: "A",
-    descendingOrderKey: "-marketing_campaign",
-    descendingOrderTitle: "Z",
-    icon: "LabelPropertyIcon",
-  },
-  marketing_channel: {
-    i18n_title: "Channel",
-    ascendingOrderKey: "marketing_channel",
-    ascendingOrderTitle: "A",
-    descendingOrderKey: "-marketing_channel",
-    descendingOrderTitle: "Z",
-    icon: "LabelPropertyIcon",
-  },
-  marketing_budget_gbp: {
-    i18n_title: "Budget (GBP)",
-    ascendingOrderKey: "marketing_budget_gbp",
-    ascendingOrderTitle: "Low",
-    descendingOrderKey: "-marketing_budget_gbp",
-    descendingOrderTitle: "High",
-    icon: "EstimatePropertyIcon",
   },
 };
 

@@ -42,6 +42,7 @@ from plane.db.models import (
     IssueDescriptionVersion,
     ProjectMember,
     EstimatePoint,
+    CustomPropertyValue,
 )
 from plane.utils.content_validator import (
     validate_html_content,
@@ -757,6 +758,37 @@ class IssueIntakeSerializer(DynamicBaseSerializer):
         read_only_fields = fields
 
 
+def _serialize_custom_value(value):
+    """Convert a CustomPropertyValue row into a wire-format primitive."""
+    prop_type = value.property.type
+    if prop_type in ("text", "url", "email"):
+        return value.value_text
+    if prop_type in ("number", "currency", "rating"):
+        return None if value.value_number is None else str(value.value_number)
+    if prop_type == "date":
+        return value.value_date.isoformat() if value.value_date else None
+    if prop_type == "checkbox":
+        return value.value_boolean
+    if prop_type == "person":
+        return str(value.value_member_id) if value.value_member_id else None
+    if prop_type == "single_select":
+        options = list(value.value_options.all())
+        return str(options[0].id) if options else None
+    if prop_type == "multi_select":
+        return [str(opt.id) for opt in value.value_options.all()]
+    return None
+
+
+def serialize_custom_properties(issue):
+    """Return a dict of {property_id: primitive} for an issue's custom values."""
+    if not hasattr(issue, "custom_values"):
+        return {}
+    result = {}
+    for value in issue.custom_values.all():
+        result[str(value.property_id)] = _serialize_custom_value(value)
+    return result
+
+
 class IssueSerializer(DynamicBaseSerializer):
     # ids
     cycle_id = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -770,6 +802,12 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
+
+    # Custom properties (Mobelaris fork — Tier B)
+    custom_properties = serializers.SerializerMethodField()
+
+    def get_custom_properties(self, obj):
+        return serialize_custom_properties(obj)
 
     class Meta:
         model = Issue
@@ -799,10 +837,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
-            # Marketing properties (Mobelaris fork — Tier A)
-            "marketing_campaign",
-            "marketing_channel",
-            "marketing_budget_gbp",
+            "custom_properties",
         ]
         read_only_fields = fields
 
@@ -832,6 +867,9 @@ class IssueListDetailSerializer(serializers.Serializer):
     def get_assignee_ids(self, obj):
         return [assignee.assignee_id for assignee in obj.issue_assignee.all()]
 
+    def get_custom_properties(self, obj):
+        return serialize_custom_properties(obj)
+
     def to_representation(self, instance):
         data = {
             # Basic fields
@@ -853,10 +891,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "updated_by": instance.updated_by_id,
             "is_draft": instance.is_draft,
             "archived_at": instance.archived_at,
-            # Marketing properties (Mobelaris fork — Tier A)
-            "marketing_campaign": instance.marketing_campaign,
-            "marketing_channel": instance.marketing_channel,
-            "marketing_budget_gbp": instance.marketing_budget_gbp,
+            "custom_properties": self.get_custom_properties(instance),
             # Computed fields
             "cycle_id": instance.cycle_id,
             "module_ids": self.get_module_ids(instance),

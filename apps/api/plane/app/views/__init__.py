@@ -24,6 +24,12 @@ from .project.member import (
     ProjectMemberPreferenceEndpoint,
 )
 
+from .project.custom_property import (
+    CustomPropertyViewSet,
+    CustomPropertyOptionViewSet,
+    IssueCustomPropertyValueEndpoint,
+)
+
 from .user.base import (
     UserEndpoint,
     UpdateUserOnBoardedEndpoint,

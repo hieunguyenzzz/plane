@@ -167,32 +167,6 @@ class Issue(ProjectBaseModel):
         blank=True,
     )
 
-    # Marketing properties (Mobelaris fork — Tier A)
-    MARKETING_CHANNEL_CHOICES = (
-        ("email_outbound", "Email Outbound"),
-        ("newsletter", "Newsletter"),
-        ("social", "Social"),
-        ("paid_ads", "Paid Ads"),
-        ("seo", "SEO"),
-        ("content", "Content"),
-        ("pr", "PR"),
-        ("influencer", "Influencer"),
-        ("other", "Other"),
-    )
-    marketing_campaign = models.CharField(max_length=120, null=True, blank=True)
-    marketing_channel = models.CharField(
-        max_length=32,
-        choices=MARKETING_CHANNEL_CHOICES,
-        null=True,
-        blank=True,
-    )
-    marketing_budget_gbp = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
-
     issue_objects = IssueManager()
 
     class Meta:
