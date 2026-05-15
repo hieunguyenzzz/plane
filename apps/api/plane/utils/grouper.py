@@ -214,4 +214,33 @@ def issue_group_values(
         else:
             return list(queryset)
 
+    # Mobelaris fork — Tier B custom properties group values.
+    if isinstance(field, str) and field.startswith("cp_"):
+        from plane.db.models import CustomProperty, CustomPropertyOption, CustomPropertyValue
+
+        prop_id = field[3:]
+        try:
+            prop = CustomProperty.objects.get(pk=prop_id, deleted_at__isnull=True)
+        except CustomProperty.DoesNotExist:
+            return []
+        if prop.type in ("single_select", "multi_select"):
+            return list(
+                CustomPropertyOption.objects.filter(
+                    property_id=prop_id, deleted_at__isnull=True
+                ).values_list("id", flat=True)
+            ) + ["None"]
+        # For other types, list distinct values present.
+        values_qs = CustomPropertyValue.objects.filter(
+            property_id=prop_id, deleted_at__isnull=True
+        )
+        if project_id:
+            values_qs = values_qs.filter(project_id=project_id)
+        if prop.type in ("text", "url", "email"):
+            return list(values_qs.values_list("value_text", flat=True).distinct()) + ["None"]
+        if prop.type in ("number", "currency", "rating"):
+            return list(values_qs.values_list("value_number", flat=True).distinct()) + ["None"]
+        if prop.type == "checkbox":
+            return [True, False]
+        return ["None"]
+
     return []

@@ -2,14 +2,53 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
-from django.db.models import Case, CharField, Min, Value, When
+from django.db.models import Case, CharField, Min, Q, Value, When
 
 # Custom ordering for priority and state
 PRIORITY_ORDER = ["urgent", "high", "medium", "low", "none"]
 STATE_ORDER = ["backlog", "unstarted", "started", "completed", "cancelled"]
 
 
+def _order_by_custom_property(issue_queryset, order_by_param):
+    """Mobelaris fork — Tier B: sort by a custom property value.
+
+    `order_by_param` shape: `cp_<uuid>` or `-cp_<uuid>`.
+    """
+    from plane.db.models import CustomProperty
+
+    desc = order_by_param.startswith("-")
+    key = order_by_param.lstrip("-")
+    prop_id = key[3:]
+    try:
+        prop = CustomProperty.objects.get(pk=prop_id, deleted_at__isnull=True)
+    except CustomProperty.DoesNotExist:
+        return issue_queryset.order_by("-created_at"), "-created_at"
+
+    if prop.type in ("number", "currency", "rating"):
+        field = "custom_values__value_number"
+    elif prop.type == "date":
+        field = "custom_values__value_date"
+    elif prop.type in ("single_select", "multi_select"):
+        field = "custom_values__value_options__display_order"
+    else:
+        field = "custom_values__value_text"
+
+    annotated = issue_queryset.annotate(
+        _cp_order_value=Min(
+            field,
+            filter=Q(custom_values__property_id=prop_id, custom_values__deleted_at__isnull=True),
+        )
+    )
+    ordering = "-_cp_order_value" if desc else "_cp_order_value"
+    return annotated.order_by(ordering, "-created_at"), ordering
+
+
 def order_issue_queryset(issue_queryset, order_by_param="-created_at"):
+    # Custom property ordering (Mobelaris fork — Tier B)
+    if isinstance(order_by_param, str) and (
+        order_by_param.startswith("cp_") or order_by_param.startswith("-cp_")
+    ):
+        return _order_by_custom_property(issue_queryset, order_by_param)
     # Priority Ordering
     if order_by_param == "priority" or order_by_param == "-priority":
         issue_queryset = issue_queryset.annotate(

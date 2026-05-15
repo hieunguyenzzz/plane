@@ -232,6 +232,77 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
         """
         return leaf_conditions
 
+    def _extract_custom_property_q(self, leaf_conditions):
+        """Mobelaris fork — Tier B.
+
+        Extract `cp_<uuid>` filter keys, build Q objects against the
+        custom_property_values table, and return (custom_q, remaining_conditions).
+        """
+        from plane.db.models import CustomProperty
+
+        custom_q = Q()
+        remaining = {}
+        for key, value in leaf_conditions.items():
+            if not isinstance(key, str) or not key.startswith("cp_"):
+                remaining[key] = value
+                continue
+            # Parse "cp_<uuid>" or "cp_<uuid>__<op>"
+            rest = key[3:]
+            if "__" in rest:
+                prop_id, _op = rest.split("__", 1)
+            else:
+                prop_id = rest
+            try:
+                prop = CustomProperty.objects.get(pk=prop_id, deleted_at__isnull=True)
+            except CustomProperty.DoesNotExist:
+                continue
+
+            field_q = None
+            if prop.type in ("single_select", "multi_select"):
+                values = value if isinstance(value, list) else [value]
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_options__id__in=values,
+                    custom_values__deleted_at__isnull=True,
+                )
+            elif prop.type in ("text", "url", "email"):
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_text__icontains=value,
+                    custom_values__deleted_at__isnull=True,
+                )
+            elif prop.type in ("number", "currency", "rating"):
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_number=value,
+                    custom_values__deleted_at__isnull=True,
+                )
+            elif prop.type == "date":
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_date__date=value,
+                    custom_values__deleted_at__isnull=True,
+                )
+            elif prop.type == "checkbox":
+                bool_value = value in (True, "true", "True", 1, "1")
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_boolean=bool_value,
+                    custom_values__deleted_at__isnull=True,
+                )
+            elif prop.type == "person":
+                values = value if isinstance(value, list) else [value]
+                field_q = Q(
+                    custom_values__property_id=prop_id,
+                    custom_values__value_member_id__in=values,
+                    custom_values__deleted_at__isnull=True,
+                )
+
+            if field_q is not None:
+                custom_q &= field_q
+
+        return custom_q, remaining
+
     def _build_leaf_q(self, leaf_conditions, view, queryset):
         """Build a Q object from leaf filter conditions using the view's FilterSet.
 
@@ -243,6 +314,13 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
         """
         if not leaf_conditions:
             return Q()
+
+        # Extract custom property filters (Mobelaris fork — Tier B).
+        custom_q, leaf_conditions = self._extract_custom_property_q(leaf_conditions)
+
+        # If only custom property filters remain, return early.
+        if not leaf_conditions:
+            return custom_q
 
         # Get the filterset class from the view
         filterset_class = getattr(view, "filterset_class", None)
@@ -293,7 +371,8 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
                 }
             )
 
-        return fs.build_combined_q()
+        # Combine FilterSet result with custom property filters (Tier B).
+        return fs.build_combined_q() & custom_q
 
     def _get_max_depth(self, view):
         """Return the maximum allowed nesting depth for complex filters.

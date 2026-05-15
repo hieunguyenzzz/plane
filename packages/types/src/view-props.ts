@@ -176,7 +176,7 @@ export interface IIssueDisplayProperties {
   cycle?: boolean;
   issue_type?: boolean;
   // Custom properties visibility (Mobelaris fork — Tier B). Keys are `cp_<uuid>`.
-  custom?: Record<string, boolean>;
+  [key: `cp_${string}`]: boolean | undefined;
 }
 
 export type TIssueKanbanFilters = {

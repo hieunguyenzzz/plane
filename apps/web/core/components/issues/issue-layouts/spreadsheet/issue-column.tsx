@@ -11,7 +11,9 @@ import type { IIssueDisplayProperties, TIssue } from "@plane/types";
 // components
 import { SPREADSHEET_COLUMNS } from "@/plane-web/components/issues/issue-layouts/utils";
 import { shouldRenderColumn } from "@/helpers/issue-filter.helper";
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
 import { WithDisplayPropertiesHOC } from "../properties/with-display-properties-HOC";
+import { SpreadsheetCustomPropertyColumn } from "./columns/custom-property-column";
 
 type Props = {
   displayProperties: IIssueDisplayProperties;
@@ -26,8 +28,36 @@ export const IssueColumn = observer(function IssueColumn(props: Props) {
   const { displayProperties, issueDetail, disableUserActions, property, updateIssue } = props;
   // router
   const tableCellRef = useRef<HTMLTableCellElement | null>(null);
+  const customPropertyStore = useCustomProperty();
 
   const shouldRenderProperty = shouldRenderColumn(property);
+
+  // Tier B — custom property column (key shape: "cp_<uuid>").
+  if (typeof property === "string" && property.startsWith("cp_")) {
+    const propertyId = property.slice(3);
+    const projectProps = customPropertyStore.getProjectProperties(issueDetail.project_id ?? null);
+    const customProperty = projectProps?.find((p) => p.id === propertyId);
+    if (!customProperty) return null;
+    return (
+      <WithDisplayPropertiesHOC
+        displayProperties={displayProperties}
+        displayPropertyKey={property}
+        shouldRenderProperty={() => shouldRenderProperty}
+      >
+        <td
+          tabIndex={0}
+          className="h-11 min-w-36 border-r-[1px] border-subtle text-13 after:absolute after:bottom-[-1px] after:w-full after:border after:border-subtle"
+          ref={tableCellRef}
+        >
+          <SpreadsheetCustomPropertyColumn
+            issue={issueDetail}
+            property={customProperty}
+            disabled={disableUserActions}
+          />
+        </td>
+      </WithDisplayPropertiesHOC>
+    );
+  }
 
   const Column = SPREADSHEET_COLUMNS[property];
 

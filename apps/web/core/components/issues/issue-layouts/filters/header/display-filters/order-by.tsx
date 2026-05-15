@@ -6,12 +6,14 @@
 
 import React, { useState } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { ISSUE_ORDER_BY_OPTIONS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { TIssueOrderByOptions } from "@plane/types";
 
 // components
 import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
 
 type Props = {
   selectedOrderBy: TIssueOrderByOptions | undefined;
@@ -23,10 +25,15 @@ export const FilterOrderBy = observer(function FilterOrderBy(props: Props) {
   const { selectedOrderBy, handleUpdate, orderByOptions } = props;
   // hooks
   const { t } = useTranslation();
+  const customPropertyStore = useCustomProperty();
+  const { projectId } = useParams() as { projectId?: string };
 
   const [previewEnabled, setPreviewEnabled] = useState(true);
 
   const activeOrderBy = selectedOrderBy ?? "-created_at";
+  const customProperties = (projectId ? customPropertyStore.getProjectProperties(projectId) ?? [] : []).filter(
+    (p) => p.is_active
+  );
 
   return (
     <>
@@ -46,6 +53,26 @@ export const FilterOrderBy = observer(function FilterOrderBy(props: Props) {
               multiple={false}
             />
           ))}
+          {customProperties.map((cp) => {
+            const ascKey = `cp_${cp.id}` as TIssueOrderByOptions;
+            const descKey = `-cp_${cp.id}` as TIssueOrderByOptions;
+            return (
+              <React.Fragment key={cp.id}>
+                <FilterOption
+                  isChecked={activeOrderBy === ascKey}
+                  onClick={() => handleUpdate(ascKey)}
+                  title={`${cp.name} (asc)`}
+                  multiple={false}
+                />
+                <FilterOption
+                  isChecked={activeOrderBy === descKey}
+                  onClick={() => handleUpdate(descKey)}
+                  title={`${cp.name} (desc)`}
+                  multiple={false}
+                />
+              </React.Fragment>
+            );
+          })}
         </div>
       )}
     </>

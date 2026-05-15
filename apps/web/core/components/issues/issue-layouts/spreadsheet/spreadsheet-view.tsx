@@ -4,8 +4,9 @@
  * See the LICENSE file for details.
  */
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane constants
 import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
 // types
@@ -14,6 +15,7 @@ import { EIssueLayoutTypes } from "@plane/types";
 // components
 import { MultipleSelectGroup } from "@/components/core/multiple-select";
 // hooks
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
 import { useProject } from "@/hooks/store/use-project";
 // plane web components
 import { IssueBulkOperationsRoot } from "@/plane-web/components/issues/bulk-operations";
@@ -64,18 +66,42 @@ export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
   const portalRef = useRef<HTMLDivElement | null>(null);
   // store hooks
   const { currentProjectDetails } = useProject();
+  const customPropertyStore = useCustomProperty();
+  const { workspaceSlug } = useParams() as { workspaceSlug?: string };
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
 
   const isEstimateEnabled: boolean = currentProjectDetails?.estimate !== null;
 
-  const spreadsheetColumnsList = isWorkspaceLevel
+  // Tier B — fetch custom properties once per project, then inject "cp_<id>" keys.
+  useEffect(() => {
+    if (!isWorkspaceLevel && workspaceSlug && currentProjectDetails?.id) {
+      customPropertyStore
+        .fetchProjectProperties(workspaceSlug, currentProjectDetails.id)
+        .catch(() => undefined);
+    }
+  }, [workspaceSlug, currentProjectDetails?.id, isWorkspaceLevel, customPropertyStore]);
+
+  const customPropertyKeys: (keyof IIssueDisplayProperties)[] = (
+    !isWorkspaceLevel && currentProjectDetails?.id
+      ? customPropertyStore.getProjectProperties(currentProjectDetails.id) ?? []
+      : []
+  )
+    .filter((p) => p.is_active)
+    .map((p) => `cp_${p.id}` as keyof IIssueDisplayProperties);
+
+  const baseColumnsList: (keyof IIssueDisplayProperties)[] = isWorkspaceLevel
     ? SPREADSHEET_PROPERTY_LIST
     : SPREADSHEET_PROPERTY_LIST.filter((property) => {
         if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
         if (property === "modules" && !currentProjectDetails?.module_view) return false;
         return true;
       });
+
+  const spreadsheetColumnsList: (keyof IIssueDisplayProperties)[] = [
+    ...baseColumnsList,
+    ...customPropertyKeys,
+  ];
 
   if (!issueIds || issueIds.length === 0) return <></>;
   return (

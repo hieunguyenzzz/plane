@@ -6,6 +6,7 @@
 
 import React from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane constants
 import { ISSUE_DISPLAY_PROPERTIES } from "@plane/constants";
 // plane i18n
@@ -13,6 +14,7 @@ import { useTranslation } from "@plane/i18n";
 // types
 import type { IIssueDisplayProperties } from "@plane/types";
 // components
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
 import { FilterHeader } from "../helpers/filter-header";
 
 type Props = {
@@ -35,6 +37,8 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
   } = props;
   // hooks
   const { t } = useTranslation();
+  const customPropertyStore = useCustomProperty();
+  const { projectId } = useParams() as { projectId?: string };
   // states
   const [previewEnabled, setPreviewEnabled] = React.useState(true);
 
@@ -57,6 +61,11 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
     return property;
   });
 
+  // Tier B — custom property entries injected at runtime.
+  const customProperties = (projectId ? customPropertyStore.getProjectProperties(projectId) ?? [] : []).filter(
+    (p) => p.is_active
+  );
+
   return (
     <>
       <FilterHeader
@@ -67,25 +76,41 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
       {previewEnabled && (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {filteredDisplayProperties.map((displayProperty) => (
-            <>
+            <button
+              key={displayProperty.key}
+              type="button"
+              className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
+                displayProperties?.[displayProperty.key]
+                  ? "border-accent-strong bg-accent-primary text-on-color"
+                  : "border-subtle hover:bg-layer-1"
+              }`}
+              onClick={() =>
+                handleUpdate({
+                  [displayProperty.key]: !displayProperties?.[displayProperty.key],
+                })
+              }
+            >
+              {t(displayProperty.titleTranslationKey)}
+            </button>
+          ))}
+          {customProperties.map((cp) => {
+            const key = `cp_${cp.id}` as const;
+            const active = !!displayProperties?.[key];
+            return (
               <button
-                key={displayProperty.key}
+                key={key}
                 type="button"
                 className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
-                  displayProperties?.[displayProperty.key]
+                  active
                     ? "border-accent-strong bg-accent-primary text-on-color"
                     : "border-subtle hover:bg-layer-1"
                 }`}
-                onClick={() =>
-                  handleUpdate({
-                    [displayProperty.key]: !displayProperties?.[displayProperty.key],
-                  })
-                }
+                onClick={() => handleUpdate({ [key]: !active })}
               >
-                {t(displayProperty.titleTranslationKey)}
+                {cp.name}
               </button>
-            </>
-          ))}
+            );
+          })}
         </div>
       )}
     </>

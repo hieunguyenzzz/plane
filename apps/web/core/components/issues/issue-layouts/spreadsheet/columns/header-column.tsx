@@ -6,6 +6,7 @@
 
 //ui
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, CheckIcon, ChevronDownIcon, Eraser, MoveRight } from "lucide-react";
+import { useParams } from "next/navigation";
 // constants
 import { SPREADSHEET_PROPERTY_DETAILS } from "@plane/constants";
 // i18n
@@ -14,6 +15,8 @@ import { useTranslation } from "@plane/i18n";
 import type { IIssueDisplayFilterOptions, IIssueDisplayProperties, TIssueOrderByOptions } from "@plane/types";
 import { CustomMenu, Row } from "@plane/ui";
 import useLocalStorage from "@/hooks/use-local-storage";
+import { useCustomProperty } from "@/hooks/store/use-custom-property";
+import { useProject } from "@/hooks/store/use-project";
 import { SpreadSheetPropertyIcon } from "../../utils";
 
 interface Props {
@@ -36,7 +39,28 @@ export function HeaderColumn(props: Props) {
     "spreadsheetViewActiveSortingProperty",
     ""
   );
-  const propertyDetails = SPREADSHEET_PROPERTY_DETAILS[property];
+  const customPropertyStore = useCustomProperty();
+  const { currentProjectDetails } = useProject();
+
+  // Tier B — synthesize property details for custom property columns.
+  let propertyDetails = SPREADSHEET_PROPERTY_DETAILS[property] as
+    | (typeof SPREADSHEET_PROPERTY_DETAILS)[keyof typeof SPREADSHEET_PROPERTY_DETAILS]
+    | undefined;
+  if (!propertyDetails && typeof property === "string" && property.startsWith("cp_")) {
+    const propertyId = property.slice(3);
+    const projectProps = customPropertyStore.getProjectProperties(currentProjectDetails?.id);
+    const cp = projectProps?.find((p) => p.id === propertyId);
+    if (cp) {
+      propertyDetails = {
+        i18n_title: cp.name,
+        ascendingOrderKey: `cp_${propertyId}` as TIssueOrderByOptions,
+        ascendingOrderTitle: "Asc",
+        descendingOrderKey: `-cp_${propertyId}` as TIssueOrderByOptions,
+        descendingOrderTitle: "Desc",
+        icon: "LabelPropertyIcon",
+      };
+    }
+  }
 
   const handleOrderBy = (order: TIssueOrderByOptions, itemKey: string) => {
     handleDisplayFilterUpdate({ order_by: order });
