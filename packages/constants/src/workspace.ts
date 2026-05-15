@@ -282,6 +282,10 @@ export const WORKSPACE_SIDEBAR_STATIC_PINNED_NAVIGATION_ITEMS_LINKS: IWorkspaceS
 ];
 
 export const IS_FAVORITE_MENU_OPEN = "is_favorite_menu_open";
+// Mobelaris fork — collapse state for the per-project "Views" sidebar tree.
+export const IS_VIEWS_MENU_OPEN = "is_views_menu_open";
+// Per-folder collapse state key prefix; append the folder id to derive the full localStorage key.
+export const VIEW_FOLDER_OPEN_PREFIX = "view_folder_open:";
 export const WORKSPACE_DEFAULT_SEARCH_RESULT: IWorkspaceSearchResults = {
   results: {
     workspace: [],

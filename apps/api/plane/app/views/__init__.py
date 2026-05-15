@@ -96,6 +96,8 @@ from .view.base import (
     IssueViewViewSet,
     IssueViewFavoriteViewSet,
 )
+
+from .view.folder import ViewFolderViewSet
 from .cycle.base import (
     CycleViewSet,
     CycleDateCheckEndpoint,

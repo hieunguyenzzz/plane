@@ -55,6 +55,39 @@ def get_default_display_properties():
     }
 
 
+class ViewFolder(WorkspaceBaseModel):
+    """Mobelaris fork: project-scoped folder that groups IssueViews in the sidebar nav."""
+
+    name = models.CharField(max_length=80)
+    sort_order = models.FloatField(default=65535)
+    logo_props = models.JSONField(default=dict)
+
+    class Meta:
+        verbose_name = "View Folder"
+        verbose_name_plural = "View Folders"
+        db_table = "view_folders"
+        ordering = ("sort_order", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "name"],
+                condition=models.Q(deleted_at__isnull=True),
+                name="unique_project_view_folder_name_when_not_deleted",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.project_id:
+            largest = ViewFolder.objects.filter(
+                project_id=self.project_id, deleted_at__isnull=True
+            ).aggregate(largest=models.Max("sort_order"))["largest"]
+            if largest is not None:
+                self.sort_order = largest + 10000
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name} <{self.project_id}>"
+
+
 class IssueView(WorkspaceBaseModel):
     name = models.CharField(max_length=255, verbose_name="View Name")
     description = models.TextField(verbose_name="View Description", blank=True)
@@ -69,6 +102,14 @@ class IssueView(WorkspaceBaseModel):
     owned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="views")
     is_locked = models.BooleanField(default=False)
     archived_at = models.DateTimeField(null=True)
+    # Mobelaris fork: optional folder grouping for sidebar nav (SET_NULL keeps views alive if folder is deleted).
+    folder = models.ForeignKey(
+        "ViewFolder",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="views",
+    )
 
     class Meta:
         verbose_name = "Issue View"

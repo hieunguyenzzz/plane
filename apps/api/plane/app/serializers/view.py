@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 # Module imports
 from .base import DynamicBaseSerializer
-from plane.db.models import IssueView
+from plane.db.models import IssueView, ViewFolder
 from plane.utils.issue_filters import issue_filters
 
 
@@ -84,3 +84,15 @@ class IssueViewSerializer(DynamicBaseSerializer):
             validated_data["query"] = {}
         validated_data["query"] = issue_filters(query_params, "PATCH")
         return super().update(instance, validated_data)
+
+
+class ViewFolderSerializer(DynamicBaseSerializer):
+    """Mobelaris fork: read/write serializer for view folders (sidebar grouping)."""
+
+    class Meta:
+        model = ViewFolder
+        fields = "__all__"
+        read_only_fields = [
+            "workspace",
+            "project",
+        ]

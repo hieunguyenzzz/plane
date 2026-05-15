@@ -10,10 +10,28 @@ from plane.app.views import (
     WorkspaceViewViewSet,
     WorkspaceViewIssuesViewSet,
     IssueViewFavoriteViewSet,
+    ViewFolderViewSet,
 )
 
 
 urlpatterns = [
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/view-folders/",
+        ViewFolderViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-view-folder",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/view-folders/<uuid:pk>/",
+        ViewFolderViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="project-view-folder",
+    ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/views/",
         IssueViewViewSet.as_view({"get": "list", "post": "create"}),
