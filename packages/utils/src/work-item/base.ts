@@ -293,24 +293,39 @@ export const getComputedDisplayFilters = (
  */
 export const getComputedDisplayProperties = (
   displayProperties: IIssueDisplayProperties = {}
-): IIssueDisplayProperties => ({
-  assignee: displayProperties?.assignee ?? true,
-  start_date: displayProperties?.start_date ?? true,
-  due_date: displayProperties?.due_date ?? true,
-  labels: displayProperties?.labels ?? true,
-  priority: displayProperties?.priority ?? true,
-  state: displayProperties?.state ?? true,
-  sub_issue_count: displayProperties?.sub_issue_count ?? true,
-  attachment_count: displayProperties?.attachment_count ?? true,
-  link: displayProperties?.link ?? true,
-  estimate: displayProperties?.estimate ?? true,
-  key: displayProperties?.key ?? true,
-  created_on: displayProperties?.created_on ?? true,
-  updated_on: displayProperties?.updated_on ?? true,
-  modules: displayProperties?.modules ?? true,
-  cycle: displayProperties?.cycle ?? true,
-  issue_type: displayProperties?.issue_type ?? true,
-});
+): IIssueDisplayProperties => {
+  // Mobelaris fork — Tier B: preserve `cp_<uuid>` custom-property visibility toggles.
+  // Why: this helper rebuilds the object using only hardcoded keys, which silently dropped
+  // cp_ entries on every fetch, resetting the spreadsheet column toggle to unchecked.
+  const customPropertyEntries: Record<`cp_${string}`, boolean | undefined> = {};
+  for (const key of Object.keys(displayProperties)) {
+    if (key.startsWith("cp_")) {
+      const value = (displayProperties as Record<string, boolean | undefined>)[key];
+      if (typeof value === "boolean") {
+        customPropertyEntries[key as `cp_${string}`] = value;
+      }
+    }
+  }
+  return {
+    assignee: displayProperties?.assignee ?? true,
+    start_date: displayProperties?.start_date ?? true,
+    due_date: displayProperties?.due_date ?? true,
+    labels: displayProperties?.labels ?? true,
+    priority: displayProperties?.priority ?? true,
+    state: displayProperties?.state ?? true,
+    sub_issue_count: displayProperties?.sub_issue_count ?? true,
+    attachment_count: displayProperties?.attachment_count ?? true,
+    link: displayProperties?.link ?? true,
+    estimate: displayProperties?.estimate ?? true,
+    key: displayProperties?.key ?? true,
+    created_on: displayProperties?.created_on ?? true,
+    updated_on: displayProperties?.updated_on ?? true,
+    modules: displayProperties?.modules ?? true,
+    cycle: displayProperties?.cycle ?? true,
+    issue_type: displayProperties?.issue_type ?? true,
+    ...customPropertyEntries,
+  };
+};
 
 export const generateWorkItemLink = ({
   workspaceSlug,
