@@ -46,7 +46,7 @@ class CustomPropertyViewSet(BaseViewSet):
         serializer = CustomPropertySerializer(properties, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = CustomPropertySerializer(data=request.data)
         if serializer.is_valid():
@@ -54,7 +54,7 @@ class CustomPropertyViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def partial_update(self, request, slug, project_id, pk):
         prop = get_object_or_404(
             self.get_queryset(),
@@ -66,7 +66,7 @@ class CustomPropertyViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk):
         prop = get_object_or_404(self.get_queryset(), pk=pk)
         prop.delete()
@@ -90,7 +90,7 @@ class CustomPropertyOptionViewSet(BaseViewSet):
         serializer = CustomPropertyOptionSerializer(options, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id, property_id):
         prop = get_object_or_404(
             CustomProperty,
@@ -104,7 +104,7 @@ class CustomPropertyOptionViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def partial_update(self, request, slug, project_id, property_id, pk):
         option = get_object_or_404(self.get_queryset(), pk=pk)
         serializer = CustomPropertyOptionSerializer(option, data=request.data, partial=True)
@@ -113,7 +113,7 @@ class CustomPropertyOptionViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, property_id, pk):
         option = get_object_or_404(self.get_queryset(), pk=pk)
         option.delete()
