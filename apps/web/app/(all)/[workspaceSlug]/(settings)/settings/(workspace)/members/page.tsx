@@ -65,11 +65,12 @@ const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsP
         message: t("workspace_settings.settings.members.invitations_sent_successfully"),
       });
     } catch (error: unknown) {
-      let message = undefined;
-      if (error instanceof Error) {
-        const err = error as Error & { error?: string };
-        message = err.error;
-      }
+      // workspaceService rejects with the raw response body ({ error, workspace_users? }), not an Error instance
+      const err = error as { error?: string; workspace_users?: { member?: { display_name?: string } }[] } | undefined;
+      const existingMembers = err?.workspace_users?.map((m) => m.member?.display_name).filter(Boolean) ?? [];
+      const message = existingMembers.length
+        ? `Already a member of this workspace: ${existingMembers.join(", ")}`
+        : err?.error;
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error!",
